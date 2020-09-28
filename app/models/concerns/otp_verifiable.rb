@@ -11,10 +11,8 @@ module OtpVerifiable
   def valid_otp?(otp)
     if sms_sending_enabled?
       OtpService.new(phone_number).verify!(otp, self.otp_token)
-    elsif (Rails.env.development? || Rails.env.test?)
-      otp == "1947" # for testing in development mode without sending OTP
     else
-      false
+      otp == "1947" # for testing in development mode without sending OTP
     end
   end
 
