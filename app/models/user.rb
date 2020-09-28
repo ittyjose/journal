@@ -1,25 +1,26 @@
 # frozen_string_literal: true
 
 class User < ApplicationRecord
-  # Include default devise modules. Others available are:
-  # :confirmable, :lockable, :timeoutable and :omniauthable
-  devise :database_authenticatable, :registerable,
-         :recoverable, :trackable, :validatable, :rememberable, :omniauthable
+  include OtpVerifiable
 
-  before_save :ensure_authentication_token_is_present
+  devise :database_authenticatable, :registerable, :omniauthable
 
-  has_many :meeting_types
-  has_many :scheduled_meetings
+  validates :phone_number, uniqueness: true
+  validates :name, :phone_number, :date_of_birth, presence: true
 
-  validates :first_name, :last_name, :email, presence: true
-  validates :email, uniqueness: true
+  has_many :visits, dependent: :destroy
 
-  def name
-    [first_name, last_name].join(" ").strip
+  before_create :ensure_authentication_token_is_present
+
+  scope :by_age,   -> (age)  { where("EXTRACT(YEAR FROM AGE(date_of_birth)) = ?", age) }
+  scope :by_phone, -> (phone) { where(phone_number: phone) }
+
+  def age
+    Time.zone.today.year - date_of_birth.year
   end
 
   def display_name
-    name || email
+    name
   end
 
   def super_admin?
@@ -27,15 +28,13 @@ class User < ApplicationRecord
   end
 
   def as_json(options = {})
-    new_options = options.merge(only: [:email, :first_name, :last_name, :current_sign_in_at])
-
+    new_options = options.merge(only: [:id, :name, :phone_number, :date_of_birth, :authentication_token])
     super new_options
   end
 
-
   def self.from_omniauth(access_token)
     data = access_token.info
-    user = User.find_by(email: data["email"]).first
+    user = User.find_by(email: data["email"])
     unless user
       user = User.new(first_name: data["first_name"],
                       last_name: data["last_name"],
@@ -44,6 +43,10 @@ class User < ApplicationRecord
       user.save!
     end
     user
+  end
+
+  def self.from_authentication_token(auth_token)
+    User.find_by(authentication_token: auth_token)
   end
 
   private
@@ -61,7 +64,7 @@ class User < ApplicationRecord
     def generate_authentication_token
       loop do
         token = Devise.friendly_token
-        break token unless User.find_by(authentication_token: token)&.first
+        break token unless User.exists?(authentication_token: token)
       end
     end
 end

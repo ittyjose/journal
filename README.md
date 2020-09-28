@@ -40,6 +40,47 @@ Build with Rails and React ❤️
 foreman start -f Procfile.dev
 ```
 
+### Running Tests
+
+API endpoints have test coverage.
+
+`bundle exec rake test` will run the test suite.
+
+### Containerization
+
+Build image
+
+1. Clone the repo.
+1. Setup `config/master.key`.
+1. `docker-compose build`.
+
+Run
+
+1. Setup env variables. (list in `config/docker-compose.yml`)
+2. `docker-compose run web rake db:migrate`.
+3. `docker-compose up`.
+4. React app will be compiled at `public/packs`.
+
+Video: [https://share.getcloudapp.com/Blu50Kl4](https://share.getcloudapp.com/Blu50Kl4)
+
+### API Documentation
+
+[https://github.com/coronasafe/journal/blob/develop/doc/api.md](https://github.com/coronasafe/journal/blob/develop/doc/api.md)
+
+### Quick demo of how to use the basic APIs
+
+1. [User Login](https://share.getcloudapp.com/8Lu7O4AR)
+2. [Visits](https://share.getcloudapp.com/DOuA0W0Y)
+3. [Admin](https://share.getcloudapp.com/geuwNk9P)
+
+### Instructions for deployment
+
+1. Run `rake db:seed`. 
+2. Setup environment variables `ADMIN_LOGIN` && `ADMIN_PASSWORD`.
+3. Schedule `CleanupOldDataJob.perform_now` to be run once every day, probably midnight.
+4. Setup the OTP service AppKey as an environment variable `SMS_API_KEY`
+5. Setup environment variable `RAILS_SERVE_STATIC_FILES` = `true`
+
 ## Contributing
 
 Checkout the [issues](https://github.com/coronasafe/journal/issues) page. When you find one to your skill liking and skill level, please leave us a comment that you are taking it up. 
